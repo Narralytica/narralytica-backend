@@ -121,7 +121,7 @@ class SupabasePublisher:
             "payload": payload,
             "source": source,
             "refresh_interval_minutes": refresh_interval_minutes,
-            "updated_at": payload.get("updated_at"),
+            "updated_at": payload.get("updated_at") or payload.get("published_at") or payload.get("generated_at"),
         }
         self._request(
             "site_cache",
