@@ -7,8 +7,7 @@ from pathlib import Path
 from typing import Any
 from urllib import request
 
-import _bootstrap
-from narralytica.config import load_dotenv
+from config import load_dotenv
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

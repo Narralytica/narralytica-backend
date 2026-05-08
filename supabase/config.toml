@@ -1,5 +1,0 @@
-project_id = "narralytica-v2"
-
-[functions.run-engines]
-verify_jwt = false
-

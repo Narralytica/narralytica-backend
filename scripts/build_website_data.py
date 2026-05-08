@@ -6,8 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
-import _bootstrap
-from narralytica.config import load_dotenv
+from config import load_dotenv
 from soso_client import BinanceTerminalClient, SoSoValueTerminalClient
 
 

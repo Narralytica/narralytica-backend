@@ -8,8 +8,7 @@ from pathlib import Path
 from typing import Any
 from urllib import error, parse, request
 
-import _bootstrap
-from narralytica.config import load_dotenv
+from config import load_dotenv
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -83,7 +82,7 @@ def _build_rows(payload_names: list[str]) -> list[dict[str, Any]]:
                 "version": str(payload.get("version", "v2")),
                 "generated_at": _generated_at(payload),
                 "published_at": published_at,
-                "source": f"scripts2/{path.name}",
+                "source": f"scripts/{path.name}",
                 "refresh_interval_minutes": REFRESH_INTERVAL_BY_PAYLOAD.get(name, 15),
                 "payload_hash": _payload_hash(payload),
                 "updated_at": published_at,

@@ -21,31 +21,31 @@ Run from the repository root.
 Build local terminal payloads:
 
 ```bash
-python scripts2/build_website_data.py
+python scripts/build_website_data.py
 ```
 
 Generate or refresh the daily desk brief:
 
 ```bash
-python scripts2/generate_desk_brief.py --force
+python scripts/generate_desk_brief.py --force
 ```
 
 Publish current payloads to Supabase:
 
 ```bash
-python scripts2/publish_terminal_payloads.py
+python scripts/publish_terminal_payloads.py
 ```
 
 Run the full backend pipeline:
 
 ```bash
-python scripts2/run_terminal_pipeline.py --publish
+python scripts/run_terminal_pipeline.py --publish
 ```
 
 Dry-run the publish without writing to Supabase:
 
 ```bash
-python scripts2/run_terminal_pipeline.py --dry-run-publish
+python scripts/run_terminal_pipeline.py --dry-run-publish
 ```
 
 ## Environment

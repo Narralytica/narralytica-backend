@@ -2,8 +2,6 @@
 
 This is the clean Supabase setup for the current Narralytica market context terminal.
 
-It does not depend on the old signal-engine Supabase tables.
-
 ## 1. Create The Table
 
 Run this file in the Supabase SQL editor:
@@ -34,13 +32,13 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ## 3. Build Payloads
 
 ```bash
-python scripts2/build_website_data.py
+python scripts/build_website_data.py
 ```
 
 Optional daily AI brief:
 
 ```bash
-python scripts2/generate_desk_brief.py --force
+python scripts/generate_desk_brief.py --force
 ```
 
 ## 4. Publish To Supabase
@@ -48,19 +46,19 @@ python scripts2/generate_desk_brief.py --force
 Dry run:
 
 ```bash
-python scripts2/publish_terminal_payloads.py --dry-run
+python scripts/publish_terminal_payloads.py --dry-run
 ```
 
 Write to Supabase:
 
 ```bash
-python scripts2/publish_terminal_payloads.py
+python scripts/publish_terminal_payloads.py
 ```
 
 Full pipeline:
 
 ```bash
-python scripts2/run_terminal_pipeline.py --publish
+python scripts/run_terminal_pipeline.py --publish
 ```
 
 ## 5. Payload Rows

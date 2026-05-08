@@ -1,1 +1,0 @@
-"""Narralytica BTC signal helpers."""

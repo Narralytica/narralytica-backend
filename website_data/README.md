@@ -1,12 +1,10 @@
 # Website Data
 
-This folder is the temporary file-based data source for the Narralytica website while we move away from the legacy signal backend and before we switch the new market-context backend to Supabase.
+This folder stores local development payloads for the Narralytica market context terminal.
 
 ## Purpose
 
-`scripts2/` writes JSON payloads here.
-
-The website should eventually read from these files instead of relying on the old signal tables and caches.
+`scripts/` writes JSON payloads here before they are optionally published to Supabase.
 
 ## Current structure
 
@@ -27,5 +25,6 @@ The website should eventually read from these files instead of relying on the ol
 
 ## Notes
 
-- This is a transport layer only.
-- Later we can move the same payload shapes into Supabase with minimal frontend churn.
+- This is generated runtime output.
+- The JSON files in `terminal/` are ignored by git.
+- Supabase is the deployment delivery path for the website.

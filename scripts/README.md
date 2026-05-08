@@ -1,13 +1,13 @@
-# scripts2
+# scripts
 
 Active backend scripts for the Narralytica market context terminal.
 
-This folder replaced the old signal-generation scripts. It does not build trade signals, rankings, or point systems. It builds structured market context for the website.
+It builds structured market context for the website: market pulse, ETF flow, liquidity, macro events, news, crypto-stock bridges, BTC treasury data, and the daily desk brief.
 
 ## Files
 
-- `_bootstrap.py`
-  Adds the project `src/` folder to Python import paths.
+- `config.py`
+  Minimal local `.env` loader used by the scripts.
 - `soso_client.py`
   Standard-library API clients for SoSoValue and Binance.
 - `build_website_data.py`
@@ -24,31 +24,31 @@ This folder replaced the old signal-generation scripts. It does not build trade 
 From the backend root:
 
 ```bash
-python scripts2/build_website_data.py
+python scripts/build_website_data.py
 ```
 
 Then optionally:
 
 ```bash
-python scripts2/generate_desk_brief.py --force
+python scripts/generate_desk_brief.py --force
 ```
 
 Publish payloads to Supabase:
 
 ```bash
-python scripts2/publish_terminal_payloads.py
+python scripts/publish_terminal_payloads.py
 ```
 
 Preview the publish without writing:
 
 ```bash
-python scripts2/publish_terminal_payloads.py --dry-run
+python scripts/publish_terminal_payloads.py --dry-run
 ```
 
 Run the full production-style pipeline:
 
 ```bash
-python scripts2/run_terminal_pipeline.py --publish
+python scripts/run_terminal_pipeline.py --publish
 ```
 
 ## Output
@@ -77,7 +77,7 @@ The payloads should provide actual market context:
 - positioning
 - sector and index structure
 
-Do not add signal scores or generated trade calls here. The frontend should present context and analysis tools, not a signal engine.
+Do not add generated trade calls here. The frontend should present context and analysis tools.
 
 ## New Supabase Contract
 

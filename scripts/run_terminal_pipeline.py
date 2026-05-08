@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS_DIR = PROJECT_ROOT / "scripts2"
+SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 
 
 def _run_step(name: str, args: list[str]) -> dict[str, object]:
