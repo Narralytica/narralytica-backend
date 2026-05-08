@@ -4,6 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$repoRoot = $PSScriptRoot
+
 $pythonCandidates = @()
 if ($env:PYTHON) {
   $pythonCandidates += $env:PYTHON
@@ -42,10 +44,16 @@ if ($ForceBrief) {
 }
 
 Write-Host "Running Narralytica backend pipeline..." -ForegroundColor Cyan
+Write-Host "Repo: $repoRoot" -ForegroundColor DarkGray
 Write-Host "Python: $python" -ForegroundColor DarkGray
 Write-Host "Command: $python $($argsList -join ' ')" -ForegroundColor DarkGray
 
-& $python @argsList
+Push-Location $repoRoot
+try {
+  & $python @argsList
+} finally {
+  Pop-Location
+}
 
 if ($LASTEXITCODE -ne 0) {
   throw "Backend pipeline failed with exit code $LASTEXITCODE."
