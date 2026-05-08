@@ -124,14 +124,17 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def _existing_is_fresh(path: Path, valid_for_date: str) -> bool:
+def _existing_is_fresh(path: Path, valid_for_date: str, source_payload_generated_at: str | None) -> bool:
     if not path.exists():
         return False
     try:
         existing = _read_json(path)
     except Exception:
         return False
-    return existing.get("valid_for_date") == valid_for_date
+    return (
+        existing.get("valid_for_date") == valid_for_date
+        and existing.get("source_payload_generated_at") == source_payload_generated_at
+    )
 
 
 def _compact_for_prompt(desk: dict[str, Any]) -> dict[str, Any]:
@@ -221,8 +224,10 @@ def main() -> None:
     parser.add_argument("--force", action="store_true", help="Regenerate even if today's brief already exists.")
     args = parser.parse_args()
 
+    desk = _read_json(DESK_DATA_PATH)
     valid_for_date = _today()
-    if not args.force and _existing_is_fresh(BRIEF_PATH, valid_for_date):
+    source_payload_generated_at = desk.get("generated_at") if isinstance(desk.get("generated_at"), str) else None
+    if not args.force and _existing_is_fresh(BRIEF_PATH, valid_for_date, source_payload_generated_at):
         print(json.dumps({"ok": True, "skipped": True, "path": str(BRIEF_PATH)}, indent=2))
         return
 
@@ -232,7 +237,6 @@ def main() -> None:
         raise RuntimeError("XAI_API is required in .env")
 
     model = env.get("XAI_MODEL", "grok-4.20-reasoning")
-    desk = _read_json(DESK_DATA_PATH)
     brief = _call_xai(api_key, model, desk, valid_for_date)
     _write_json(BRIEF_PATH, brief)
     print(json.dumps({"ok": True, "skipped": False, "path": str(BRIEF_PATH), "model": model}, indent=2))
