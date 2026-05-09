@@ -1,24 +1,90 @@
 # Narralytica Backend
 
-Narralytica is a crypto market context terminal. It turns live market, macro, news, ETF, liquidity, and treasury data into structured payloads that the website can render as a decision-support workspace.
+Narralytica is a crypto market context and analysis terminal. This backend turns scattered market data into structured JSON payloads that power the Narralytica website.
 
-This repository is the backend data engine. It fetches data, prepares normalized terminal payloads, optionally generates the daily desk brief, and publishes the finished payloads to Supabase for the website to read.
+It is not a buy/sell signal generator, trading bot, or financial advice system.
 
-## What This Repo Does
+## What This Backend Does
 
-- Builds the terminal data shown on the website.
-- Normalizes market context from external data providers.
-- Calculates derived views for pulse, structure, analysis, events, watchlists, and the desk.
-- Writes local JSON payloads for development.
-- Publishes the same payloads into Supabase `terminal_payloads` for website delivery.
+- Fetches market context from SoSoValue, Binance, and xAI.
+- Normalizes ETF flows, market structure, sectors, macro/news, watchlists, and desk context.
+- Builds JSON payloads for the website terminal.
+- Optionally generates an xAI-powered daily desk brief from the latest payloads.
+- Publishes generated payloads to Supabase storage when requested.
 
-This backend does not host the public website. The frontend lives in the separate Narralytica web repository.
+The core user value is context: the backend helps the website explain what is moving, why it may be moving, and which market inputs are worth watching next.
 
-## Main Scripts
+## Active Direction
 
-Run from the repository root.
+The active backend path is:
 
-Build local terminal payloads:
+- `scripts/`
+- `website_data/terminal/`
+- optional Supabase publishing through `scripts/publish_terminal_payloads.py`
+
+Older signal-era wording, old Supabase experiments, and unused `src/narralytica` code should be treated as legacy unless a script in `scripts/` still depends on it. The earlier decision/signal engine is not part of the Wave 1 product surface; it is planned for Wave 2 after backtesting, validation, and refinement work is corrected.
+
+## End-to-End Flow
+
+```text
+SoSoValue API + Binance + xAI
+        ↓
+scripts/build_website_data.py
+        ↓
+website_data/terminal/*.json
+        ↓
+Next.js /api/terminal-data
+        ↓
+Narralytica dashboard
+```
+
+## SoSoValue API Integration Map
+
+| Website Section | SoSoValue Data Used | Output |
+| --- | --- | --- |
+| ETF Flow | BTC/ETH ETF flow data | ETF inflow/outflow trend cards |
+| Sector Rotation | SoSoValue sector/index data | Top sectors and market structure context |
+| News / Events | SoSoValue macro and hot news | Market catalyst feed |
+| Desk Brief | SoSoValue news + market context | Daily market intelligence brief |
+
+## APIs Used
+
+| API / Endpoint | Used For | Output In Narralytica |
+| --- | --- | --- |
+| `GET https://api.sosovalue.xyz/openapi/v1/currencies` | Currency universe and IDs | Maps assets such as BTC/ETH/SOL to SoSoValue currency records |
+| `GET /currencies/{currency_id}/market-snapshot` | Price, market cap, volume, and daily movement | Terminal overview, ticker tape, pulse, and desk context |
+| `GET /currencies/{currency_id}/klines?interval=1d&limit=7` | Recent spot market path | Overview trend context and short history cards |
+| `GET /currencies/{currency_id}/pairs?page=1&page_size=5` | Trading pairs, turnover, and liquidity context | Liquidity map and market structure views |
+| `GET /currencies/{currency_id}/token-economics` | Token economics metadata | Analysis payloads and token context where available |
+| `GET /currencies/{currency_id}/supply?limit=30` | Supply history | Supply/unlock analysis inputs |
+| `GET /currencies/{currency_id}/fundraising` | Fundraising and allocation context | Unlock/supply and token pressure context |
+| `GET /currencies/sector-spotlight` | Sector-level market spotlight | Sector rotation and market structure context |
+| `GET /etfs/summary-history?symbol={BTC_or_ETH}&country_code=US&limit=5` | BTC/ETH ETF net flow history | ETF flow cards and flow lens |
+| `GET /etfs?symbol={BTC_or_ETH}&country_code=US` | ETF product list | ETF market context and asset coverage |
+| `GET /etfs/{ticker}/market-snapshot` | ETF snapshot data | ETF flow and market snapshot details |
+| `GET /analyses` | Available SoSoValue analysis charts | Analysis payload discovery |
+| `GET /analyses/funding_rate?limit=7` | Funding-rate analysis chart | Futures/perp bias context |
+| `GET /indices` | SoSoValue index list | Index and sector coverage |
+| `GET /indices/{ticker}/market-snapshot` | Index performance and market data | SoSoValue indices and sector rotation cards |
+| `GET /indices/{ticker}/constituents` | Index constituents and weights | Index constituents and narrative weights |
+| `GET /news?page=1&page_size=20&language=en` | General news feed | Events and desk context |
+| `GET /news/hot?page=1&page_size=10&language=en` | Hot market news | Hot news feed and desk brief inputs |
+| `GET /macro/events` | Macro calendar | Upcoming catalysts and events section |
+| `GET /macro/events/{event_name}/history?limit=3` | Historical macro actual/forecast/previous values | Macro surprise tracker |
+| `GET /crypto-stocks` | Crypto-linked public equities | Equity proxy board |
+| `GET /crypto-stocks/{ticker}/market-snapshot` | Equity proxy price and turnover | TradFi proxy and watch boards |
+| `GET /crypto-stocks/sectors` | Crypto-stock sector groups | Equity sector read-through |
+| `GET /crypto-stocks/sector/{sector_name}/index?limit=7` | Sector index history | Crypto-stock bridge context |
+| `GET /btc-treasuries` | Corporate BTC treasury holdings | BTC treasury board |
+| `GET /btc-treasuries/{ticker}/purchase-history?limit=5` | Recent BTC treasury purchases | Treasury activity rows |
+| `GET https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol={symbol}&period=1d&limit=5` | Binance futures long/short account ratio | Longs vs shorts and positioning context |
+| `POST https://api.x.ai/v1/chat/completions` | xAI desk brief generation | Daily desk brief from prepared market context |
+
+## How To Run Locally
+
+Run from the backend repository root.
+
+Build terminal payloads:
 
 ```bash
 python scripts/build_website_data.py
@@ -30,69 +96,78 @@ Generate or refresh the daily desk brief:
 python scripts/generate_desk_brief.py --force
 ```
 
-Publish current payloads to Supabase:
+Run the full local pipeline:
 
 ```bash
-python scripts/publish_terminal_payloads.py
+python scripts/run_terminal_pipeline.py
 ```
 
-Run the full backend pipeline:
+Run the full pipeline and publish to Supabase:
 
 ```bash
 python scripts/run_terminal_pipeline.py --publish
 ```
 
-Dry-run the publish without writing to Supabase:
+Dry-run Supabase publishing:
 
 ```bash
 python scripts/run_terminal_pipeline.py --dry-run-publish
 ```
 
-## Environment
+## Environment Variables
 
-Create a local `.env` file.
+Create a local `.env` file in the backend repo.
 
 ```env
 SOSO_API_KEY=your_sosovalue_api_key
 XAI_API=your_xai_api_key
+XAI_MODEL=grok-4.20-reasoning
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-The service-role key is used by the backend publisher.
+Notes:
 
-## Supabase
+- `SOSO_API_KEY` is required for SoSoValue-powered payloads.
+- Binance public endpoints are used without a key in the current scripts.
+- `XAI_API` is required only when generating the desk brief.
+- Supabase variables are required only when publishing payloads.
 
-Run the schema in `supabase/terminal_schema.sql` inside the Supabase SQL editor. It creates one delivery table:
+## Generated Output
 
-```text
-public.terminal_payloads
-```
-
-The backend publishes one row per terminal payload, keyed like:
-
-```text
-terminal:hero
-terminal:overview
-terminal:desk
-terminal:news
-terminal:watchlist
-terminal:analysis
-```
-
-## Data Flow
+The active output folder is:
 
 ```text
-Backend scripts
--> external market/context APIs
--> normalized terminal payloads
--> Supabase terminal_payloads
--> Narralytica website
+website_data/terminal/
 ```
 
-Supabase is used as storage and delivery. The automated fetching and calculations still happen in this backend.
+Generated payloads include:
 
-## Notes
+- `manifest.json`
+- `hero.json`
+- `overview.json`
+- `desk.json`
+- `desk_brief.json`
+- `market_structure.json`
+- `news.json`
+- `macro.json`
+- `watchlist.json`
+- `analysis.json`
 
-- `website_data/terminal/*.json` is generated output and is ignored by git.
-- Runtime payloads are generated by the scripts and published to Supabase for delivery.
+These files are generated artifacts for the website and should not be edited by hand as source data.
+
+## Wave 1 Demo Notes
+
+- This is a working market-context prototype.
+- The backend generates structured JSON payloads used by the website.
+- Some sections may use fallback or demo-safe handling when API data is unavailable.
+- The goal is to prove the data pipeline and user value, not to provide trading signals.
+
+## Known Limitations / Next Steps
+
+- Provider availability can affect freshness and completeness.
+- The desk brief depends on the latest generated `desk.json`.
+- Fetching currently runs locally by design. Wave 2 will move the pipeline toward a server-side scheduled runtime after more backend depth is added.
+- Supabase is used as a delivery store when publishing is enabled; the backend still performs the fetching and calculations.
+- The earlier decision/signal engine is held for Wave 2 because the backtesting and refinement layers still need correction before being exposed.
+- The project is in Wave 1 demo scope, so payload schemas may still evolve.
