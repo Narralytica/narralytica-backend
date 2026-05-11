@@ -19,6 +19,7 @@ INDEX_TICKERS = ["ssiMAG7", "ssiLayer1", "ssiAI", "ssiMeme", "ssiDeFi", "ssiRWA"
 WATCHLIST_STOCKS = ["MSTR", "COIN", "MARA", "RIOT", "HUT", "SMLR"]
 TREASURY_TICKERS = ["MSTR", "MARA", "COIN", "RIOT", "HUT"]
 ETF_TYPE_BY_ASSET = {"BTC": "BTC", "ETH": "ETH"}
+ETF_HISTORY_LOOKBACK = 15
 BINANCE_SYMBOL_BY_ASSET = {"BTC": "BTCUSDT", "ETH": "ETHUSDT"}
 
 T = TypeVar("T")
@@ -71,18 +72,27 @@ def _sorted_desc(rows: list[dict[str, Any]], field: str) -> list[dict[str, Any]]
     return sorted(rows, key=lambda row: _safe_float(row.get(field)) or float("-inf"), reverse=True)
 
 
-def _normalize_etf_history(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _normalize_etf_history(rows: list[dict[str, Any]], *, limit: int = 5) -> list[dict[str, Any]]:
     normalized: list[dict[str, Any]] = []
-    for row in rows[:5]:
+    seen_dates: set[str] = set()
+    for row in rows:
+        date = row.get("date")
+        if date:
+            date_key = str(date)
+            if date_key in seen_dates:
+                continue
+            seen_dates.add(date_key)
         normalized.append(
             {
-                "date": row.get("date"),
+                "date": date,
                 "totalNetInflow": _safe_float(row.get("total_net_inflow")),
                 "totalValueTraded": _safe_float(row.get("total_value_traded")),
                 "totalNetAssets": _safe_float(row.get("total_net_assets")),
                 "cumulativeNetInflow": _safe_float(row.get("cum_net_inflow")),
             }
         )
+        if len(normalized) >= limit:
+            break
     return normalized
 
 
@@ -352,7 +362,7 @@ def _build_asset_bundle(
         etf_history_rows = _call_with_capture(
             errors,
             source=f"{asset.lower()}_etf_summary_history",
-            fn=lambda: soso.get_etf_summary_history(etf_symbol, country_code="US", limit=5),
+            fn=lambda: soso.get_etf_summary_history(etf_symbol, country_code="US", limit=ETF_HISTORY_LOOKBACK),
             fallback=[],
         )
         etf_list_rows = _call_with_capture(
@@ -371,7 +381,8 @@ def _build_asset_bundle(
             fallback=[],
         )
 
-    latest_etf = etf_history_rows[0] if etf_history_rows else {}
+    etf_history = _normalize_etf_history(etf_history_rows)
+    latest_etf = etf_history[0] if etf_history else {}
     return {
         "asset": asset,
         "currencyId": currency_id or None,
@@ -391,8 +402,8 @@ def _build_asset_bundle(
         ],
         "headlineNews": [_normalize_news_item(row) for row in news[:3]],
         "etf": {
-            "dailyNetInflow": _safe_float(latest_etf.get("total_net_inflow")),
-            "history5d": _normalize_etf_history(etf_history_rows),
+            "dailyNetInflow": latest_etf.get("totalNetInflow"),
+            "history5d": etf_history,
             "listedTickers": etf_list_rows[:10],
         },
         "positioning": _normalize_positioning(positioning_rows),
@@ -792,18 +803,20 @@ def _build_analysis_payload(
         history_rows = _call_with_capture(
             errors,
             source=f"analysis_etf_{asset}",
-            fn=lambda s=symbol: soso.get_etf_summary_history(s, limit=10),
+            fn=lambda s=symbol: soso.get_etf_summary_history(s, limit=ETF_HISTORY_LOOKBACK),
             fallback=[],
         )
+        history = _normalize_etf_history(history_rows, limit=10)
+        latest_history = history[0] if history else {}
         existing = ((hero_assets.get(asset) or {}).get("etf") or {}) if isinstance(hero_assets.get(asset), dict) else {}
         flow_assets.append(
             {
                 "asset": asset,
-                "dailyNetInflow": existing.get("dailyNetInflow") if existing else (_safe_float(history_rows[0].get("total_net_inflow")) if history_rows else None),
-                "totalNetAssets": _safe_float(history_rows[0].get("total_net_assets")) if history_rows else None,
-                "totalValueTraded": _safe_float(history_rows[0].get("total_value_traded")) if history_rows else None,
-                "cumulativeNetInflow": _safe_float(history_rows[0].get("cum_net_inflow")) if history_rows else None,
-                "history": _normalize_etf_history(history_rows[:10]),
+                "dailyNetInflow": existing.get("dailyNetInflow") if existing else latest_history.get("totalNetInflow"),
+                "totalNetAssets": latest_history.get("totalNetAssets"),
+                "totalValueTraded": latest_history.get("totalValueTraded"),
+                "cumulativeNetInflow": latest_history.get("cumulativeNetInflow"),
+                "history": history,
             }
         )
 
