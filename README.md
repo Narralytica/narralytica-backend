@@ -22,12 +22,9 @@ The active backend path is:
 - `website_data/terminal/`
 - `supabase/terminal_schema.sql`
 
-<<<<<<< HEAD
 The Python scripts are the backend engine. They fetch market data, normalize it, generate terminal JSON payloads, and optionally generate the daily desk brief.
 
 Supabase is used as the hosted payload store for the live website. The backend publishes generated payloads into Supabase, and the website reads them from there.
-=======
->>>>>>> 70cfe5756bf2037b7b0dbc498c65a159492baccb
 
 ## End-to-End Flow
 
@@ -37,6 +34,10 @@ SoSoValue API + Binance + xAI
 scripts/build_website_data.py
         ↓
 website_data/terminal/*.json
+        ↓
+scripts/publish_terminal_payloads.py
+        ↓
+Supabase terminal_payloads table
         ↓
 Next.js /api/terminal-data
         ↓
@@ -51,6 +52,7 @@ Narralytica dashboard
 | Sector Rotation | SoSoValue sector/index data | Top sectors and market structure context |
 | News / Events | SoSoValue macro and hot news | Market catalyst feed |
 | Desk Brief | SoSoValue news + market context | Daily market intelligence brief |
+| Analysis | Market, token, flow, and macro inputs | Structured research context |
 
 ## APIs Used
 
@@ -128,6 +130,7 @@ SOSO_API_KEY=
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 XAI_API=
+```
 
 Notes:
 
@@ -135,7 +138,6 @@ Notes:
 - Binance public endpoints are used without a key in the current scripts.
 - `XAI_API` is required only when generating the desk brief.
 - Supabase variables are required only when publishing payloads.
-
 
 ## Generated Output
 
@@ -160,12 +162,34 @@ Generated payloads include:
 
 These files are generated artifacts for the website and should not be edited by hand as source data.
 
-## Wave 1 Demo Notes
+## Supabase Delivery Store
+
+Supabase is used as a delivery layer for the live website.
+
+The backend publishes each generated payload into the `terminal_payloads` table as one row per payload:
+
+- `terminal:manifest`
+- `terminal:hero`
+- `terminal:overview`
+- `terminal:desk`
+- `terminal:desk_brief`
+- `terminal:market_structure`
+- `terminal:news`
+- `terminal:macro`
+- `terminal:watchlist`
+- `terminal:analysis`
+
+The website reads these rows through its `/api/terminal-data` route.
+
+Supabase does not contain the main backend logic. The backend logic lives in the Python scripts.
+
+## Wave 1 Demo Scope
 
 - This is a working market-context prototype.
-- The backend generates structured JSON payloads used by the website.
-- Some sections may use fallback or demo-safe handling when API data is unavailable.
+- The backend collects market data, structures it, and prepares payloads for the website.
+- The website displays those payloads as a market intelligence terminal.
 - The goal is to prove the data pipeline and user value, not to provide trading signals.
+- Some sections may use fallback or demo-safe handling when provider data is unavailable.
 
 ## Known Limitations / Next Steps
 
