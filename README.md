@@ -22,9 +22,12 @@ The active backend path is:
 - `website_data/terminal/`
 - `supabase/terminal_schema.sql`
 
+<<<<<<< HEAD
 The Python scripts are the backend engine. They fetch market data, normalize it, generate terminal JSON payloads, and optionally generate the daily desk brief.
 
 Supabase is used as the hosted payload store for the live website. The backend publishes generated payloads into Supabase, and the website reads them from there.
+=======
+>>>>>>> 70cfe5756bf2037b7b0dbc498c65a159492baccb
 
 ## End-to-End Flow
 
