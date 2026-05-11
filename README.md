@@ -22,7 +22,6 @@ The active backend path is:
 - `website_data/terminal/`
 - optional Supabase publishing through `scripts/publish_terminal_payloads.py`
 
-Older signal-era wording, old Supabase experiments, and unused `src/narralytica` code should be treated as legacy unless a script in `scripts/` still depends on it. The earlier decision/signal engine is not part of the Wave 1 product surface; it is planned for Wave 2 after backtesting, validation, and refinement work is corrected.
 
 ## End-to-End Flow
 
