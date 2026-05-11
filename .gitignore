@@ -15,7 +15,6 @@ env/
 # Generated data and runtime output
 website_data/terminal/*.json
 results/
-signal_snapshots/
 logs/
 *.log
 
@@ -36,3 +35,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Local helper scripts
+*.local.ps1

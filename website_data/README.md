@@ -1,30 +1,48 @@
 # Website Data
 
-This folder stores local development payloads for the Narralytica market context terminal.
+This folder stores generated payloads for the Narralytica market context terminal.
 
 ## Purpose
 
-`scripts/` writes JSON payloads here before they are optionally published to Supabase.
+`scripts/` writes terminal JSON payloads here after fetching and normalizing market data.
 
-## Current structure
+These files are the local output of the backend pipeline. When publishing is enabled, the same payloads are uploaded to Supabase for the live website.
 
-- `terminal/manifest.json`
+## Current Structure
+
+- `terminal/manifest.json`  
   Declares file version, refresh timing, and available payload files.
-- `terminal/hero.json`
+
+- `terminal/hero.json`  
   Hero/header payload for the market context terminal.
-- `terminal/overview.json`
+
+- `terminal/overview.json`  
   Core market pulse, sector rotation, and asset board payload.
-- `terminal/market_structure.json`
+
+- `terminal/desk.json`  
+  Aggregated market desk context used by the daily desk brief.
+
+- `terminal/desk_brief.json`  
+  xAI-generated daily desk brief based on `desk.json`.
+
+- `terminal/market_structure.json`  
   Futures positioning, funding, liquidity, and index leadership payload.
-- `terminal/news.json`
+
+- `terminal/news.json`  
   Hot, research, and asset-focus news payload.
-- `terminal/macro.json`
+
+- `terminal/macro.json`  
   Macro calendar and event-history payload.
-- `terminal/watchlist.json`
+
+- `terminal/watchlist.json`  
   Crypto stock, BTC treasury, and related watchlist payload.
+
+- `terminal/analysis.json`  
+  Structured analysis payload combining market, flow, macro, and token context.
 
 ## Notes
 
-- This is generated runtime output.
+- This folder contains generated runtime output.
 - The JSON files in `terminal/` are ignored by git.
-- Supabase is the deployment delivery path for the website.
+- Do not edit generated JSON files by hand.
+- To refresh the payloads, run the backend pipeline from the repository root.

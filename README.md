@@ -20,9 +20,11 @@ The active backend path is:
 
 - `scripts/`
 - `website_data/terminal/`
-- optional Supabase publishing through `scripts/publish_terminal_payloads.py`
+- `supabase/terminal_schema.sql`
 
-Older signal-era wording, old Supabase experiments, and unused `src/narralytica` code should be treated as legacy unless a script in `scripts/` still depends on it. The earlier decision/signal engine is not part of the Wave 1 product surface; it is planned for Wave 2 after backtesting, validation, and refinement work is corrected.
+The Python scripts are the backend engine. They fetch market data, normalize it, generate terminal JSON payloads, and optionally generate the daily desk brief.
+
+Supabase is used as the hosted payload store for the live website. The backend publishes generated payloads into Supabase, and the website reads them from there.
 
 ## End-to-End Flow
 
@@ -119,12 +121,10 @@ python scripts/run_terminal_pipeline.py --dry-run-publish
 Create a local `.env` file in the backend repo.
 
 ```env
-SOSO_API_KEY=your_sosovalue_api_key
-XAI_API=your_xai_api_key
-XAI_MODEL=grok-4.20-reasoning
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
+SOSO_API_KEY=
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+XAI_API=
 
 Notes:
 
@@ -132,6 +132,7 @@ Notes:
 - Binance public endpoints are used without a key in the current scripts.
 - `XAI_API` is required only when generating the desk brief.
 - Supabase variables are required only when publishing payloads.
+
 
 ## Generated Output
 
@@ -167,7 +168,6 @@ These files are generated artifacts for the website and should not be edited by 
 
 - Provider availability can affect freshness and completeness.
 - The desk brief depends on the latest generated `desk.json`.
-- Fetching currently runs locally by design. Wave 2 will move the pipeline toward a server-side scheduled runtime after more backend depth is added.
-- Supabase is used as a delivery store when publishing is enabled; the backend still performs the fetching and calculations.
-- The earlier decision/signal engine is held for Wave 2 because the backtesting and refinement layers still need correction before being exposed.
-- The project is in Wave 1 demo scope, so payload schemas may still evolve.
+- Fetching currently runs from the Python pipeline. A later version can move this toward a scheduled server-side runtime.
+- Payload schemas may evolve as the terminal gains richer drilldowns and clearer source transparency.
+- Future versions may add backtested research tools, saved watchlists, alerts, and historical market-reaction analysis.

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from urllib import parse, request
 import json
+import time
 
 
 def _fetch_json(
@@ -251,12 +252,23 @@ class BinanceTerminalClient:
         period: str = "1d",
         limit: int = 5,
     ) -> list[dict[str, Any]]:
-        payload = _fetch_json(
-            f"{self.base_url}/futures/data/globalLongShortAccountRatio",
-            params={
-                "symbol": symbol,
-                "period": period,
-                "limit": limit,
-            },
-        )
-        return payload if isinstance(payload, list) else []
+        last_error: Exception | None = None
+        for attempt in range(3):
+            try:
+                payload = _fetch_json(
+                    f"{self.base_url}/futures/data/globalLongShortAccountRatio",
+                    params={
+                        "symbol": symbol,
+                        "period": period,
+                        "limit": limit,
+                    },
+                    timeout=30,
+                )
+                return payload if isinstance(payload, list) else []
+            except Exception as exc:
+                last_error = exc
+                if attempt < 2:
+                    time.sleep(1.5 * (attempt + 1))
+        if last_error:
+            raise last_error
+        return []

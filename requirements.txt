@@ -1,0 +1,2 @@
+# Current pipeline uses Python standard-library modules only.
+# No external Python packages are required.

@@ -1019,6 +1019,49 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _load_existing_payload(filename: str) -> dict[str, Any]:
+    path = WEBSITE_DATA_DIR / filename
+    if not path.exists():
+        return {}
+    try:
+        return _read_json(path)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _has_positioning(positioning: Any) -> bool:
+    if not isinstance(positioning, dict):
+        return False
+    latest = positioning.get("latest")
+    if not isinstance(latest, dict):
+        return False
+    return latest.get("longAccountShare") is not None and latest.get("shortAccountShare") is not None
+
+
+def _restore_previous_positioning(hero: dict[str, Any], previous_hero: dict[str, Any]) -> None:
+    current_assets = hero.get("assets") if isinstance(hero.get("assets"), dict) else {}
+    previous_assets = previous_hero.get("assets") if isinstance(previous_hero.get("assets"), dict) else {}
+    for asset, bundle in current_assets.items():
+        if not isinstance(bundle, dict):
+            continue
+        current_positioning = bundle.get("positioning")
+        if _has_positioning(current_positioning):
+            continue
+        previous_bundle = previous_assets.get(asset)
+        if not isinstance(previous_bundle, dict):
+            continue
+        previous_positioning = previous_bundle.get("positioning")
+        if _has_positioning(previous_positioning):
+            restored = dict(previous_positioning)
+            restored["stale"] = True
+            restored["fallbackReason"] = "Latest Binance long/short fetch unavailable"
+            bundle["positioning"] = restored
+
+
 def _list_count(value: Any) -> int:
     return len(value) if isinstance(value, list) else 0
 
@@ -1084,11 +1127,13 @@ def main() -> None:
     env = load_dotenv()
     soso = SoSoValueTerminalClient(env.get("SOSO_API_KEY", ""))
     binance = BinanceTerminalClient()
+    previous_hero = _load_existing_payload("hero.json")
 
     shared_errors: list[dict[str, str]] = []
     currency_map = _build_currency_map(soso, shared_errors)
 
     hero = _build_hero_payload(soso, binance, currency_map, shared_errors.copy())
+    _restore_previous_positioning(hero, previous_hero)
     overview = _build_overview_payload(soso, currency_map, shared_errors.copy())
     market_structure = _build_market_structure_payload(soso, binance, currency_map, shared_errors.copy())
     news = _build_news_payload(soso, currency_map, shared_errors.copy())

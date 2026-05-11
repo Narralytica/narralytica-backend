@@ -79,7 +79,13 @@ The payloads should provide actual market context:
 
 Do not add generated trade calls here. The frontend should present context and analysis tools.
 
-## New Supabase Contract
+## Supabase Publishing
+
+Supabase is used as the hosted payload store for the live website.
+
+`publish_terminal_payloads.py` uploads the generated JSON payloads from `website_data/terminal/` into the `terminal_payloads` table.
+
+The backend logic still lives in the Python scripts. Supabase only stores the final payloads so the website can read them through `/api/terminal-data`.
 
 Run `supabase/terminal_schema.sql` in the Supabase SQL editor for a clean terminal-only setup.
 
@@ -96,4 +102,4 @@ Payloads are upserted into `public.terminal_payloads` as one row per terminal pa
 - `terminal:watchlist`
 - `terminal:analysis`
 
-The website can load all terminal data with one Supabase/PostgREST table endpoint by filtering `payload_key` with those ten keys.
+The website loads terminal data through its `/api/terminal-data` route, which reads these rows from Supabase by filtering `payload_key`.
